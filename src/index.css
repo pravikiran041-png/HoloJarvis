@@ -1,0 +1,728 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== CUSTOM THEME VARIABLES ===== */
+:root {
+  --color-space-900: #000000;
+  --color-space-800: #050510;
+  --color-space-700: #0a0a1a;
+  --color-space-600: #0f0f24;
+  --color-space-500: #15152e;
+
+  --color-holo-cyan: #00d4ff;
+  --color-holo-cyan-dim: #00a3cc;
+  --color-holo-blue: #3b82f6;
+  --color-holo-purple: #7c3aed;
+  --color-holo-violet: #8b5cf6;
+  --color-holo-pink: #ec4899;
+
+  --color-neon-green: #00ff88;
+  --color-neon-red: #ff3366;
+  --color-neon-orange: #ff8800;
+
+  --color-glass-white: rgba(255, 255, 255, 0.04);
+  --color-glass-border: rgba(255, 255, 255, 0.06);
+
+  --color-text-primary: #e0e7ff;
+  --color-text-secondary: #94a3b8;
+  --color-text-dim: #475569;
+
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ===== BASE STYLES ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-body);
+  background: #000000;
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== IRON MAN HUD GRID ===== */
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(0, 212, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(rgba(124, 58, 237, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.02) 1px, transparent 1px);
+  background-size: 80px 80px, 80px 80px, 20px 20px, 20px 20px;
+}
+
+.bg-radial-glow {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 35%, rgba(0, 212, 255, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 30% at 50% 40%, rgba(124, 58, 237, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 50% 35%, rgba(0, 212, 255, 0.03) 0%, transparent 40%);
+}
+
+/* ===== SCANLINE OVERLAY (subtle CRT effect) ===== */
+.scanlines::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.04) 2px,
+    rgba(0, 0, 0, 0.04) 4px
+  );
+  z-index: 1000;
+}
+
+/* ===== GLASS MORPHISM ===== */
+.glass {
+  background: rgba(5, 5, 16, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--color-glass-border);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* ===== JARVIS AVATAR ANIMATIONS ===== */
+@keyframes rotate-ring {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes rotate-ring-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes pulse-ring-outward {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+    border-color: rgba(0, 212, 255, 0.4);
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+    border-color: rgba(124, 58, 237, 0);
+  }
+}
+
+@keyframes pulse-ring-outward-fast {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+    border-color: rgba(0, 212, 255, 0.6);
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+    border-color: rgba(0, 212, 255, 0);
+  }
+}
+
+@keyframes pulse-ring-outward-green {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+    border-color: rgba(0, 255, 136, 0.5);
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+    border-color: rgba(0, 255, 136, 0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(0, 212, 255, 0.3),
+      0 0 40px rgba(0, 212, 255, 0.15),
+      0 0 80px rgba(124, 58, 237, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(0, 212, 255, 0.5),
+      0 0 60px rgba(0, 212, 255, 0.25),
+      0 0 120px rgba(124, 58, 237, 0.15);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes pulse-glow-speaking {
+  0%, 100% {
+    box-shadow:
+      0 0 40px rgba(0, 212, 255, 0.6),
+      0 0 80px rgba(0, 212, 255, 0.35),
+      0 0 120px rgba(124, 58, 237, 0.25),
+      inset 0 0 40px rgba(0, 212, 255, 0.12);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow:
+      0 0 60px rgba(0, 212, 255, 0.8),
+      0 0 120px rgba(0, 212, 255, 0.5),
+      0 0 180px rgba(124, 58, 237, 0.35),
+      inset 0 0 60px rgba(0, 212, 255, 0.18);
+    transform: scale(1.06);
+  }
+}
+
+@keyframes pulse-glow-listening {
+  0%, 100% {
+    box-shadow:
+      0 0 30px rgba(0, 255, 136, 0.4),
+      0 0 60px rgba(0, 255, 136, 0.2),
+      0 0 100px rgba(0, 255, 136, 0.1),
+      inset 0 0 30px rgba(0, 255, 136, 0.08);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow:
+      0 0 50px rgba(0, 255, 136, 0.6),
+      0 0 100px rgba(0, 255, 136, 0.35),
+      0 0 160px rgba(0, 255, 136, 0.2),
+      inset 0 0 50px rgba(0, 255, 136, 0.12);
+    transform: scale(1.04);
+  }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg); }
+}
+
+@keyframes core-breathe {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+@keyframes core-breathe-speaking {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.18); }
+}
+
+@keyframes core-breathe-listening {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.12); }
+}
+
+@keyframes waveform-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+@keyframes float-particle {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% {
+    transform: translateY(-100vh) translateX(20px);
+    opacity: 0;
+  }
+}
+
+/* Avatar-local particles orbiting around the avatar */
+@keyframes avatar-particle-orbit {
+  0% {
+    transform: rotate(var(--ap-start)) translateX(var(--ap-radius));
+    opacity: 0;
+  }
+  15% { opacity: var(--ap-opacity); }
+  85% { opacity: var(--ap-opacity); }
+  100% {
+    transform: rotate(calc(var(--ap-start) + 360deg)) translateX(var(--ap-radius));
+    opacity: 0;
+  }
+}
+
+/* Avatar scanline */
+@keyframes avatar-scanline {
+  0% { top: -2px; }
+  100% { top: 100%; }
+}
+
+/* ===== TYPEWRITER ===== */
+@keyframes typewriter-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ===== AVATAR COMPONENT STYLES ===== */
+.avatar-container {
+  position: relative;
+  width: 280px;
+  height: 280px;
+}
+
+/* ── Pulse rings that expand outward ── */
+.avatar-pulse-ring {
+  position: absolute;
+  inset: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  animation: pulse-ring-outward 3s ease-out infinite;
+  pointer-events: none;
+}
+
+.avatar-pulse-ring.speaking {
+  animation: pulse-ring-outward-fast 1.5s ease-out infinite;
+}
+
+.avatar-pulse-ring.listening {
+  animation: pulse-ring-outward-green 2s ease-out infinite;
+}
+
+.avatar-outer-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px dashed rgba(0, 212, 255, 0.25);
+  animation: rotate-ring 12s linear infinite;
+}
+
+.avatar-outer-ring.speaking {
+  border-color: rgba(0, 212, 255, 0.6);
+  animation-duration: 3s;
+}
+
+.avatar-outer-ring.listening {
+  border-color: rgba(0, 255, 136, 0.5);
+  animation-duration: 6s;
+}
+
+.avatar-middle-ring {
+  position: absolute;
+  inset: 15px;
+  border-radius: 50%;
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  animation: rotate-ring-reverse 18s linear infinite;
+}
+
+.avatar-middle-ring.speaking {
+  border-color: rgba(124, 58, 237, 0.5);
+  animation-duration: 4s;
+}
+
+.avatar-middle-ring.listening {
+  border-color: rgba(0, 255, 136, 0.3);
+  animation-duration: 8s;
+}
+
+.avatar-glow-ring {
+  position: absolute;
+  inset: 30px;
+  border-radius: 50%;
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.avatar-glow-ring.speaking {
+  animation: pulse-glow-speaking 0.8s ease-in-out infinite;
+}
+
+.avatar-glow-ring.listening {
+  animation: pulse-glow-listening 1.5s ease-in-out infinite;
+}
+
+.avatar-core {
+  position: absolute;
+  inset: 50px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 40% 40%,
+      rgba(0, 212, 255, 0.35) 0%,
+      rgba(124, 58, 237, 0.25) 40%,
+      rgba(0, 0, 0, 0.9) 70%
+    );
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  animation: core-breathe 4s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.avatar-core.speaking {
+  animation: core-breathe-speaking 1s ease-in-out infinite;
+  border-color: rgba(0, 212, 255, 0.5);
+  background:
+    radial-gradient(circle at 40% 40%,
+      rgba(0, 212, 255, 0.5) 0%,
+      rgba(124, 58, 237, 0.35) 40%,
+      rgba(0, 0, 0, 0.85) 70%
+    );
+}
+
+.avatar-core.listening {
+  animation: core-breathe-listening 1.5s ease-in-out infinite;
+  border-color: rgba(0, 255, 136, 0.4);
+  background:
+    radial-gradient(circle at 40% 40%,
+      rgba(0, 255, 136, 0.35) 0%,
+      rgba(0, 212, 255, 0.2) 40%,
+      rgba(0, 0, 0, 0.9) 70%
+    );
+}
+
+/* ── Avatar scanline overlay ── */
+.avatar-scanline-overlay {
+  position: absolute;
+  inset: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.avatar-scanline-overlay::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 212, 255, 0.15) 30%, rgba(0, 212, 255, 0.25) 50%, rgba(0, 212, 255, 0.15) 70%, transparent 100%);
+  animation: avatar-scanline 3s linear infinite;
+}
+
+.avatar-scanline-overlay.listening::before {
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 255, 136, 0.15) 30%, rgba(0, 255, 136, 0.3) 50%, rgba(0, 255, 136, 0.15) 70%, transparent 100%);
+  animation-duration: 2s;
+}
+
+.avatar-scanline-overlay.speaking::before {
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 212, 255, 0.2) 30%, rgba(124, 58, 237, 0.3) 50%, rgba(0, 212, 255, 0.2) 70%, transparent 100%);
+  animation-duration: 1.5s;
+}
+
+/* ── Avatar-local glowing particles ── */
+.avatar-local-particle {
+  position: absolute;
+  width: var(--ap-size, 3px);
+  height: var(--ap-size, 3px);
+  border-radius: 50%;
+  background: var(--ap-color, rgba(0, 212, 255, 0.6));
+  box-shadow: 0 0 6px var(--ap-color, rgba(0, 212, 255, 0.4));
+  top: 50%;
+  left: 50%;
+  margin: -1.5px 0 0 -1.5px;
+  animation: avatar-particle-orbit var(--ap-duration) linear infinite;
+  animation-delay: var(--ap-delay, 0s);
+  pointer-events: none;
+}
+
+.avatar-orbital {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--color-holo-cyan);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  margin: -4px 0 0 -4px;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.6);
+  animation: orbit var(--orbit-duration) linear infinite;
+}
+
+.avatar-orbital.speaking {
+  box-shadow: 0 0 25px rgba(0, 212, 255, 0.9);
+}
+
+.avatar-orbital.listening {
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+}
+
+/* Waveform bars inside core */
+.waveform-bar {
+  width: 4px;
+  height: 30px;
+  background: linear-gradient(to top, var(--color-holo-cyan), var(--color-holo-purple));
+  border-radius: 2px;
+  animation: waveform-bar var(--bar-speed) ease-in-out infinite;
+  animation-delay: var(--bar-delay);
+  opacity: 0.7;
+  position: relative;
+  z-index: 3;
+}
+
+.waveform-bar.active {
+  opacity: 1;
+  height: 40px;
+}
+
+.waveform-bar.listening-bar {
+  background: linear-gradient(to top, var(--color-neon-green), var(--color-holo-cyan));
+}
+
+/* ===== MIC BUTTON ===== */
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); }
+  50% { box-shadow: 0 0 0 15px rgba(0, 255, 136, 0); }
+}
+
+.mic-btn {
+  transition: all 0.3s ease;
+}
+
+.mic-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
+}
+
+.mic-btn.recording {
+  animation: mic-pulse 1.5s ease-in-out infinite;
+  background: linear-gradient(135deg, #00ff88, #00cc6a) !important;
+  border-color: rgba(0, 255, 136, 0.5) !important;
+  color: #000 !important;
+}
+
+/* ===== CONVERSATION STYLES ===== */
+.conversation-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 212, 255, 0.15) transparent;
+}
+
+.conversation-scroll::-webkit-scrollbar {
+  width: 3px;
+}
+
+.conversation-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.conversation-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.15);
+  border-radius: 2px;
+}
+
+.conversation-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.3);
+}
+
+.message-user {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(124, 58, 237, 0.08));
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.message-jarvis {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.06), rgba(124, 58, 237, 0.04));
+  border: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+/* ===== TYPING INDICATOR ===== */
+@keyframes typing-dot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
+  30% { transform: translateY(-8px); opacity: 1; }
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-holo-cyan);
+  animation: typing-dot 1.4s ease-in-out infinite;
+}
+
+/* ===== SETTINGS MODAL ===== */
+.settings-overlay {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.settings-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  transition: all 0.3s ease;
+}
+
+.settings-input:focus {
+  border-color: var(--color-holo-cyan);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);
+  outline: none;
+}
+
+.settings-input::placeholder {
+  color: var(--color-text-dim);
+}
+
+/* ===== STATUS BAR ===== */
+@keyframes status-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  animation: status-blink 2s ease-in-out infinite;
+}
+
+/* ===== NEON TEXT ===== */
+.text-glow-cyan {
+  text-shadow:
+    0 0 10px rgba(0, 212, 255, 0.5),
+    0 0 20px rgba(0, 212, 255, 0.3),
+    0 0 40px rgba(0, 212, 255, 0.1);
+}
+
+.text-glow-purple {
+  text-shadow:
+    0 0 10px rgba(124, 58, 237, 0.5),
+    0 0 20px rgba(124, 58, 237, 0.3);
+}
+
+.text-glow-green {
+  text-shadow:
+    0 0 10px rgba(0, 255, 136, 0.5),
+    0 0 20px rgba(0, 255, 136, 0.3);
+}
+
+/* ===== FLOATING PARTICLES ===== */
+.particle {
+  position: fixed;
+  width: 2px;
+  height: 2px;
+  background: rgba(0, 212, 255, 0.35);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: float-particle var(--particle-duration) linear infinite;
+  animation-delay: var(--particle-delay);
+  left: var(--particle-x);
+  bottom: -10px;
+}
+
+/* ===== FADE IN ANIMATION ===== */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+
+/* ===== SPINNER ===== */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes scan-line {
+  0%, 100% { top: 0; }
+  50% { top: 100%; }
+}
+
+.spinner {
+  border: 2px solid rgba(0, 212, 255, 0.2);
+  border-top-color: var(--color-holo-cyan);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ===== JARVIS OS WATERMARK ===== */
+.jarvis-os-watermark {
+  position: fixed;
+  bottom: 30px;
+  left: 20px;
+  z-index: 5;
+  pointer-events: none;
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  color: rgba(0, 212, 255, 0.15);
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.08);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.jarvis-os-corner {
+  position: fixed;
+  top: 20px;
+  right: 80px;
+  z-index: 5;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: rgba(0, 212, 255, 0.2);
+}
+
+/* ===== HUD CORNER DECORATIONS ===== */
+.hud-corner {
+  position: fixed;
+  width: 40px;
+  height: 40px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.hud-corner-tl {
+  top: 8px;
+  left: 8px;
+  border-top: 1px solid rgba(0, 212, 255, 0.15);
+  border-left: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+.hud-corner-tr {
+  top: 8px;
+  right: 8px;
+  border-top: 1px solid rgba(0, 212, 255, 0.15);
+  border-right: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+.hud-corner-bl {
+  bottom: 8px;
+  left: 8px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+  border-left: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+.hud-corner-br {
+  bottom: 8px;
+  right: 8px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+  border-right: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+@keyframes slide-in-right {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(0); }
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

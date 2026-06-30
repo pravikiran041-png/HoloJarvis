@@ -1,0 +1,42 @@
+# ── Secrets (NEVER push these) ──
+.env
+.env.*
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+*.log
+
+# ── Node / Frontend ──
+node_modules/
+dist/
+frontend.log
+backend.log
+
+# ── macOS ──
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── WhatsApp session (contains cookies/login data) ──
+whatsapp_session/
+whatsapp_debug.html
+
+# ── Conversation memory (personal data) ──
+conversation_memory.json
+PyWhatKit_DB.txt
+
+# ── ADB / Phone ──
+phone_screenshot.png
+
+# ── IDE ──
+.vscode/
+.idea/

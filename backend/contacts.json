@@ -1,0 +1,18 @@
+{
+  "rahul": {
+    "phone": "+919999999999",
+    "email": "rahul@gmail.com"
+  },
+  "mom": {
+    "phone": "+918888888888",
+    "email": "mom@gmail.com"
+  },
+  "boss": {
+    "phone": "+917777777777",
+    "email": "boss@company.com"
+  },
+  "jayant": {
+    "phone": "6305375030",
+    "email": ""
+  }
+}
