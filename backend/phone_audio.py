@@ -55,6 +55,7 @@ def start_phone_audio() -> dict:
             "--audio-codec=opus",            # Low-latency Opus codec
             "--audio-bit-rate=128000",       # 128kbps quality
             "--audio-buffer=50",             # 50ms buffer for low latency
+            "--audio-dup",                   # Play audio on phone AND laptop simultaneously
         ]
 
         _audio_process = subprocess.Popen(
