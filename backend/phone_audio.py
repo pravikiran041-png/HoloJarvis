@@ -33,10 +33,10 @@ def is_audio_running() -> bool:
     return _audio_process.poll() is None  # None = still running
 
 
-def start_phone_audio() -> dict:
+def start_phone_audio(source="media") -> dict:
     """
     Start streaming phone audio to laptop speakers using scrcpy.
-    Uses --no-video so only audio is forwarded (no mirror window popup).
+    source: "media" (default playback) or "call" (voice call)
     """
     global _audio_process
 
@@ -55,8 +55,13 @@ def start_phone_audio() -> dict:
             "--audio-codec=opus",            # Low-latency Opus codec
             "--audio-bit-rate=128000",       # 128kbps quality
             "--audio-buffer=50",             # 50ms buffer for low latency
-            "--audio-dup",                   # Play audio on phone AND laptop simultaneously
         ]
+
+        if source == "call":
+            cmd.append("--audio-source=voice-call")
+        else:
+            # Media / Playback
+            cmd.append("--audio-dup")        # Play audio on phone AND laptop simultaneously
 
         _audio_process = subprocess.Popen(
             cmd,

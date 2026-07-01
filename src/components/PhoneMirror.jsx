@@ -7,6 +7,7 @@ export function PhoneMirror({ onClose }) {
   const [typeText, setTypeText] = useState('');
   const [audioStreaming, setAudioStreaming] = useState(false);
   const [audioLoading, setAudioLoading] = useState(false);
+  const [audioSource, setAudioSource] = useState('media'); // 'media' or 'call'
   const imgRef = useRef(null);
 
   // Gesture refs
@@ -73,7 +74,11 @@ export function PhoneMirror({ onClose }) {
         await fetch(apiUrl('/phone/audio/stop'), { method: 'POST' });
         setAudioStreaming(false);
       } else {
-        const res = await fetch(apiUrl('/phone/audio/start'), { method: 'POST' });
+        const res = await fetch(apiUrl('/phone/audio/start'), { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source: audioSource })
+        });
         const data = await res.json();
         if (data.success) setAudioStreaming(true);
         else alert(data.message);
@@ -83,7 +88,7 @@ export function PhoneMirror({ onClose }) {
     } finally {
       setAudioLoading(false);
     }
-  }, [audioStreaming]);
+  }, [audioStreaming, audioSource]);
 
   // 2. Gesture Control Handlers (Tap & Swipe)
   const handleGestureStart = (clientX, clientY) => {
@@ -184,6 +189,21 @@ export function PhoneMirror({ onClose }) {
           DEVICE LINK
         </h2>
         <div className="flex items-center gap-2">
+          {/* Audio Source Selector */}
+          <select 
+            value={audioSource}
+            onChange={(e) => {
+              setAudioSource(e.target.value);
+              if (audioStreaming) toggleAudio(); // Stop if source changed while streaming
+            }}
+            disabled={audioStreaming || audioLoading}
+            className="bg-space-800 border border-glass-border text-text-dim text-[10px] font-[family-name:var(--font-mono)] rounded-md px-2 py-1 outline-none focus:border-holo-cyan transition-colors disabled:opacity-50 appearance-none"
+            style={{ WebkitAppearance: 'none' }}
+          >
+            <option value="media">🎵 MEDIA</option>
+            <option value="call">📞 CALL</option>
+          </select>
+          
           {/* Audio Stream Toggle */}
           <button
             onClick={toggleAudio}

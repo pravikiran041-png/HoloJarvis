@@ -1208,10 +1208,13 @@ async def laptop_stream_ws(websocket: WebSocket):
 
 # ── Phone Audio Streaming ──────────────────────────────────────────────────────
 
+class AudioStartRequest(BaseModel):
+    source: str = "media"
+
 @app.post("/phone/audio/start")
-async def phone_audio_start():
+async def phone_audio_start(req: AudioStartRequest):
     from backend.phone_audio import start_phone_audio
-    return start_phone_audio()
+    return start_phone_audio(source=req.source)
 
 
 @app.post("/phone/audio/stop")
