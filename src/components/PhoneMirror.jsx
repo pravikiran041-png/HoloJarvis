@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiUrl, wsUrl } from '../apiConfig';
 
 export function PhoneMirror({ onClose }) {
   const [frame, setFrame] = useState(null);
   const [connected, setConnected] = useState(false);
   const [typeText, setTypeText] = useState('');
+  const [audioStreaming, setAudioStreaming] = useState(false);
+  const [audioLoading, setAudioLoading] = useState(false);
   const imgRef = useRef(null);
 
   // Gesture refs
@@ -50,6 +52,38 @@ export function PhoneMirror({ onClose }) {
       if (ws) ws.close();
     };
   }, []);
+
+  // Check audio status on mount
+  useEffect(() => {
+    fetch(apiUrl('/phone/audio/status'))
+      .then(r => r.json())
+      .then(d => setAudioStreaming(!!d.running))
+      .catch(() => {});
+
+    // Stop audio when panel is closed
+    return () => {
+      fetch(apiUrl('/phone/audio/stop'), { method: 'POST' }).catch(() => {});
+    };
+  }, []);
+
+  const toggleAudio = useCallback(async () => {
+    setAudioLoading(true);
+    try {
+      if (audioStreaming) {
+        await fetch(apiUrl('/phone/audio/stop'), { method: 'POST' });
+        setAudioStreaming(false);
+      } else {
+        const res = await fetch(apiUrl('/phone/audio/start'), { method: 'POST' });
+        const data = await res.json();
+        if (data.success) setAudioStreaming(true);
+        else alert(data.message);
+      }
+    } catch (err) {
+      console.error('Audio toggle error:', err);
+    } finally {
+      setAudioLoading(false);
+    }
+  }, [audioStreaming]);
 
   // 2. Gesture Control Handlers (Tap & Swipe)
   const handleGestureStart = (clientX, clientY) => {
@@ -149,12 +183,47 @@ export function PhoneMirror({ onClose }) {
         <h2 className="font-[family-name:var(--font-display)] tracking-widest text-holo-cyan text-sm">
           DEVICE LINK
         </h2>
-        <button 
-          onClick={onClose}
-          className="text-text-dim hover:text-holo-red transition-colors text-xl leading-none"
-        >
-          ×
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Audio Stream Toggle */}
+          <button
+            onClick={toggleAudio}
+            disabled={audioLoading}
+            title={audioStreaming ? 'Stop phone audio' : 'Stream phone audio to laptop'}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-[family-name:var(--font-mono)] tracking-wider border transition-all duration-300 ${
+              audioStreaming
+                ? 'bg-neon-green/15 border-neon-green/60 text-neon-green shadow-[0_0_12px_rgba(0,255,136,0.2)]'
+                : 'bg-space-800 border-glass-border text-text-dim hover:border-holo-cyan/40 hover:text-holo-cyan'
+            } disabled:opacity-50`}
+          >
+            {audioLoading ? (
+              <span className="inline-block w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+            ) : audioStreaming ? (
+              <>
+                {/* Animated sound bars */}
+                <span className="flex items-end gap-[2px] h-3">
+                  <span className="w-[2px] bg-neon-green rounded-full" style={{height:'40%', animation:'audio-bar 0.6s ease-in-out infinite'}} />
+                  <span className="w-[2px] bg-neon-green rounded-full" style={{height:'100%', animation:'audio-bar 0.6s ease-in-out infinite 0.1s'}} />
+                  <span className="w-[2px] bg-neon-green rounded-full" style={{height:'60%', animation:'audio-bar 0.6s ease-in-out infinite 0.2s'}} />
+                  <span className="w-[2px] bg-neon-green rounded-full" style={{height:'80%', animation:'audio-bar 0.6s ease-in-out infinite 0.3s'}} />
+                </span>
+                AUDIO ON
+              </>
+            ) : (
+              <>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M12 6v12m0 0l-3-3m3 3l3-3M9 9a3 3 0 000 6" />
+                </svg>
+                AUDIO
+              </>
+            )}
+          </button>
+          <button 
+            onClick={onClose}
+            className="text-text-dim hover:text-holo-red transition-colors text-xl leading-none"
+          >
+            ×
+          </button>
+        </div>
       </div>
 
       <div className="w-full max-w-[360px] flex-1 flex flex-col items-center min-h-0">

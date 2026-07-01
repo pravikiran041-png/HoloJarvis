@@ -1206,6 +1206,26 @@ async def laptop_stream_ws(websocket: WebSocket):
     await stream_laptop_screen(websocket)
 
 
+# ── Phone Audio Streaming ──────────────────────────────────────────────────────
+
+@app.post("/phone/audio/start")
+async def phone_audio_start():
+    from backend.phone_audio import start_phone_audio
+    return start_phone_audio()
+
+
+@app.post("/phone/audio/stop")
+async def phone_audio_stop():
+    from backend.phone_audio import stop_phone_audio
+    return stop_phone_audio()
+
+
+@app.get("/phone/audio/status")
+async def phone_audio_status():
+    from backend.phone_audio import get_audio_status
+    return get_audio_status()
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=False)
