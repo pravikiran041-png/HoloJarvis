@@ -8,6 +8,7 @@ An AI-powered personal assistant and remote device control ecosystem. HoloJarvis
 
 - **🎤 Voice AI Assistant** — Talk to Jarvis powered by Llama 3.3 70B (Groq API) with multilingual support (10+ languages)
 - **📱 Phone Mirroring & Control** — Real-time Android screen stream with interactive tap/swipe gestures over Tailscale wireless ADB
+- **🔊 Live Audio Streaming** — Forward phone audio to laptop speakers in real-time with dual-output mode (`--audio-dup`)
 - **📞 AI Call Interceptor** — Automatically intercepts cellular/WhatsApp calls, speaks natively in any language, and generates post-call summaries
 - **💻 Remote Laptop Control** — Control your Mac from your phone: trackpad emulation, real-time keyboard streaming, screenshots, lock/sleep
 - **🔒 Biometric Authentication** — Face ID + Touch ID (WebAuthn) dual-factor security for phone access
