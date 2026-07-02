@@ -75,6 +75,20 @@ class CameraStreamManager:
                 "--window-height=1",
             ]
 
+            # Ensure screen is ON (scrcpy produces no frames if screen is off)
+            try:
+                wake_cmd = ["adb", "-s", target, "shell", "input", "keyevent", "WAKEUP"]
+                proc = await asyncio.create_subprocess_exec(
+                    *wake_cmd,
+                    stdout=asyncio.subprocess.DEVNULL,
+                    stderr=asyncio.subprocess.DEVNULL
+                )
+                await proc.wait()
+                # Give it a tiny moment to wake
+                await asyncio.sleep(0.5)
+            except Exception:
+                pass
+
             try:
                 # Start scrcpy (writes mkv to file)
                 self.scrcpy_proc = await asyncio.create_subprocess_exec(
