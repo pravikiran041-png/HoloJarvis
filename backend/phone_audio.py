@@ -13,15 +13,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-PHONE_IP = os.getenv("PHONE_TAILSCALE_IP")
+from backend.phone_state import get_active_phone_ip
 
 # Global process reference
 _audio_process = None
 
 
 def get_adb_target() -> str | None:
-    if PHONE_IP:
-        return f"{PHONE_IP}:5555"
+    ip = get_active_phone_ip()
+    if ip:
+        return f"{ip}:5555"
     return None
 
 
@@ -58,9 +59,8 @@ def start_phone_audio(source="media") -> dict:
         ]
 
         if source == "call":
-            # Using 'mic' as a workaround because Android 10+ blocks VoIP/WhatsApp audio capture. 
-            # If the user puts the phone on speakerphone, the mic will pick up the other person's voice.
-            cmd.append("--audio-source=mic")
+            # voice-call-downlink captures the OTHER person's voice during a call
+            cmd.append("--audio-source=voice-call-downlink")
         else:
             # Media / Playback
             cmd.append("--audio-dup")        # Play audio on phone AND laptop simultaneously

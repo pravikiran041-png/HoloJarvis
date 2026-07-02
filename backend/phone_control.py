@@ -6,16 +6,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-PHONE_IP = os.getenv("PHONE_TAILSCALE_IP")
-PHONE_PIN = os.getenv("PHONE_PIN")
-PHONE_USB_ID = os.getenv("PHONE_USB_ID")
+from backend.phone_state import get_active_phone_ip, get_active_phone_pin, get_active_phone_usb_id
 
 
 def get_adb_target():
-    """Return the ADB target specifier for wireless connection."""
-    if PHONE_IP:
-        return f"{PHONE_IP}:5555"
+    """Return the ADB target specifier for the currently active phone."""
+    ip = get_active_phone_ip()
+    if ip:
+        return f"{ip}:5555"
     return None
+
 
 
 def run_adb(command: list) -> dict:
@@ -40,15 +40,16 @@ def run_adb(command: list) -> dict:
 
 def connect_wireless() -> dict:
     """Connect to phone over Tailscale network via ADB TCP."""
-    if not PHONE_IP:
-        return {"success": False, "message": "PHONE_TAILSCALE_IP not set in .env, Sir"}
+    phone_ip = get_active_phone_ip()
+    if not phone_ip:
+        return {"success": False, "message": "Phone IP not set in .env, Sir"}
     try:
         result = subprocess.run(
-            ["adb", "connect", f"{PHONE_IP}:5555"],
+            ["adb", "connect", f"{phone_ip}:5555"],
             capture_output=True, text=True, timeout=10
         )
         if "connected" in result.stdout.lower() or "already" in result.stdout.lower():
-            return {"success": True, "message": f"Phone connected wirelessly via {PHONE_IP}, Sir"}
+            return {"success": True, "message": f"Phone connected wirelessly via {phone_ip}, Sir"}
 
         return {
             "success": False,
@@ -66,14 +67,16 @@ def connect_wireless() -> dict:
 
 def setup_tcp_wireless() -> dict:
     """Enable wireless ADB over USB once, then connect via Tailscale IP."""
-    if not PHONE_IP:
-        return {"success": False, "message": "PHONE_TAILSCALE_IP not set in .env, Sir"}
-    if not PHONE_USB_ID:
-        return {"success": False, "message": "PHONE_USB_ID not set in .env, Sir"}
+    phone_ip = get_active_phone_ip()
+    phone_usb = get_active_phone_usb_id()
+    if not phone_ip:
+        return {"success": False, "message": "Phone IP not set in .env, Sir"}
+    if not phone_usb:
+        return {"success": False, "message": "Phone USB ID not set in .env, Sir"}
 
     try:
         tcpip = subprocess.run(
-            ["adb", "-s", PHONE_USB_ID, "tcpip", "5555"],
+            ["adb", "-s", phone_usb, "tcpip", "5555"],
             capture_output=True, text=True, timeout=12
         )
         tcpip_output = (tcpip.stdout + tcpip.stderr).strip()
@@ -85,7 +88,7 @@ def setup_tcp_wireless() -> dict:
             }
 
         connect = subprocess.run(
-            ["adb", "connect", f"{PHONE_IP}:5555"],
+            ["adb", "connect", f"{phone_ip}:5555"],
             capture_output=True, text=True, timeout=10
         )
         connect_output = (connect.stdout + connect.stderr).strip()
@@ -174,15 +177,16 @@ def unlock_phone() -> dict:
     if not lock_status["locked"]:
         return {"success": True, "message": "Phone already unlocked, Sir"}
 
-    if not PHONE_PIN:
-        return {"success": False, "message": "PHONE_PIN not set in .env, Sir"}
+    phone_pin = get_active_phone_pin()
+    if not phone_pin:
+        return {"success": False, "message": "Phone PIN not set in .env, Sir"}
 
     # Swipe up to dismiss lock screen
     run_adb(["shell", "input", "swipe", "540", "1600", "540", "800"])
     time.sleep(0.8)
 
     # Enter PIN
-    run_adb(["shell", "input", "text", PHONE_PIN])
+    run_adb(["shell", "input", "text", phone_pin])
     time.sleep(0.3)
 
     # Press Enter to confirm

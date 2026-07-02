@@ -183,9 +183,17 @@ async def startup_event():
         print(f"[STARTUP] Skipped macOS sleep/wake config: {e}")
 
     try:
+        from backend.phone_state import set_active_phone, list_phones
         from backend.phone_control import connect_wireless
+        # Connect all configured phones
+        for phone in list_phones():
+            if phone["configured"] and phone["ip"]:
+                import subprocess as _sp
+                _sp.run(["adb", "connect", f"{phone['ip']}:5555"], capture_output=True, text=True, timeout=10)
+                print(f"[STARTUP] Connected to {phone['name']} ({phone['ip']})")
+        # Default active phone connection
         result = connect_wireless()
-        print(f"[STARTUP] Phone wireless connect: {result.get('message', '')}")
+        print(f"[STARTUP] Active phone connect: {result.get('message', '')}")
     except Exception as e:
         print(f"[STARTUP] Phone connect skipped: {e}")
 
@@ -349,6 +357,11 @@ Classify the command into one of the following intents:
    Arguments: {"position": 0}
    (Examples: "place my x in the center" -> position: 4, "top left" -> position: 0, "bottom right" -> position: 8. The grid positions are 0=top-left, 1=top-middle, 2=top-right, 3=middle-left, 4=center, 5=middle-right, 6=bottom-left, 7=bottom-middle, 8=bottom-right)
 
+16. "switch_phone":
+    Arguments: {"target_phone": "a55" | "a23"}
+    (Examples: "open A55 phone" -> target_phone: "a55", "show my A23" -> target_phone: "a23", "switch to A23 phone" -> target_phone: "a23", "open a55" -> target_phone: "a55", "connect to A23" -> target_phone: "a23")
+    IMPORTANT: If the user mentions "A55", "a55", "A23", or "a23" in any phone-related command, classify as switch_phone.
+
 You MUST respond with a JSON object in the following format:
 {
   "intent": "intent_name",
@@ -461,6 +474,21 @@ async def _handle_command_logic(req: CommandRequest, authorization: Optional[str
             return {"reply": laptop.type_text(text).get("message", "Done, Sir.")}
 
     # ── Fast path: phone control shortcuts (no Groq key needed) ──
+    # Fast path: "open a55", "open a23", "switch to a55", "show a23 phone"
+    if any(tag in t_lower for tag in ("a55", "a 55")):
+        from backend.phone_state import set_active_phone
+        from backend.phone_control import connect_wireless
+        set_active_phone("a55")
+        connect_wireless()
+        return {"reply": "Switching to Samsung A55, Sir.", "action": "show_phone"}
+
+    if any(tag in t_lower for tag in ("a23", "a 23")):
+        from backend.phone_state import set_active_phone
+        from backend.phone_control import connect_wireless
+        set_active_phone("a23")
+        connect_wireless()
+        return {"reply": "Switching to Samsung A23, Sir.", "action": "show_phone"}
+
     if "phone on laptop" in t_lower or ("open" in t_lower and "phone" in t_lower and "mirror" in t_lower):
         return {"reply": "Opening phone mirror on laptop, Sir.", "action": "show_phone"}
 
@@ -859,6 +887,18 @@ async def _handle_command_logic(req: CommandRequest, authorization: Optional[str
             
         return {"reply": reply}
         
+    elif intent == "switch_phone":
+        target = args.get("target_phone", "").lower().strip()
+        if target:
+            from backend.phone_state import set_active_phone, get_active_phone_name
+            from backend.phone_control import connect_wireless
+            result = set_active_phone(target)
+            if result["success"]:
+                connect_wireless()
+                return {"reply": f"Switching to {get_active_phone_name()}, Sir.", "action": "show_phone"}
+            return {"reply": result["message"]}
+        return {"reply": "Which phone would you like to switch to, Sir? A55 or A23?"}
+
     else:
         return {"reply": "I did not understand the instruction, Sir."}
 
