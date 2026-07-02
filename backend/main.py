@@ -1050,6 +1050,24 @@ async def phone_status():
     lock = is_phone_locked() if conn["connected"] else {"locked": None}
     return {"connected": conn["connected"], "locked": lock["locked"]}
 
+class ActivePhoneRequest(BaseModel):
+    active_phone: str
+
+@app.get("/phone/active")
+async def get_active_phone_endpoint():
+    from backend.phone_state import get_active_phone, get_active_phone_name
+    return {"active_phone": get_active_phone(), "name": get_active_phone_name()}
+
+@app.post("/phone/active")
+async def set_active_phone_endpoint(req: ActivePhoneRequest):
+    from backend.phone_state import set_active_phone
+    from backend.phone_control import connect_wireless
+    res = set_active_phone(req.active_phone)
+    if res["success"]:
+        # Try to connect via ADB to the new active phone
+        connect_wireless()
+    return res
+
 # --- WEBSOCKET ENDPOINT ---
 
 from backend.phone_stream import stream_phone_screen

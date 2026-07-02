@@ -537,6 +537,7 @@ export default function App() {
   const [faceAuthAction, setFaceAuthAction] = useState('phone'); // 'phone' or 'camera'
   const [showWirelessSetupButton, setShowWirelessSetupButton] = useState(false);
 
+  const [activePhone, setActivePhone] = useState('a55');
   const [selectedLanguage, setSelectedLanguage] = useState('en-US');
 
   const [isRemoteMode] = useState(() => {
@@ -549,6 +550,18 @@ export default function App() {
     const handleEnroll = () => setFaceAuthMode('enroll');
     window.addEventListener('start-face-enroll', handleEnroll);
     return () => window.removeEventListener('start-face-enroll', handleEnroll);
+  }, []);
+
+  useEffect(() => {
+    // Fetch initial active phone state
+    fetch(apiUrl('/phone/active'))
+      .then(res => res.json())
+      .then(data => {
+        if (data.active_phone) {
+          setActivePhone(data.active_phone);
+        }
+      })
+      .catch(err => console.error("Failed to fetch active phone:", err));
   }, []);
 
   // Fingerprint enrollment: use the FaceAuth component's built-in fingerprint flow
@@ -583,6 +596,20 @@ export default function App() {
   const addMessage = useCallback((role, content) => {
     setMessages((prev) => [...prev, { role, content, time: getTimestamp() }]);
   }, []);
+
+  const handlePhoneChange = async (e) => {
+    const newPhone = e.target.value;
+    setActivePhone(newPhone);
+    try {
+      await fetch(apiUrl('/phone/active'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active_phone: newPhone })
+      });
+    } catch (err) {
+      console.error("Failed to set active phone", err);
+    }
+  };
 
   // ── Audio ref for Edge-TTS playback ──
   const audioRef = useRef(null);
@@ -877,6 +904,15 @@ export default function App() {
           >
             👁️ SURVEILLANCE
           </button>
+          <select
+            value={activePhone}
+            onChange={handlePhoneChange}
+            className="text-[10px] font-[family-name:var(--font-mono)] bg-space-950/80 border border-glass-border rounded-md px-2 py-1.5 text-holo-cyan outline-none hover:border-holo-cyan/50 focus:border-holo-cyan transition-all cursor-pointer mr-2"
+            title="Select Active Phone"
+          >
+            <option value="a55" className="bg-space-950 text-text-primary">📱 A55</option>
+            <option value="a23" className="bg-space-950 text-text-primary">📱 A23</option>
+          </select>
           <select
             value={selectedLanguage}
             onChange={(e) => setSelectedLanguage(e.target.value)}
