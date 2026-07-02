@@ -4,7 +4,8 @@ import { wsUrl } from '../apiConfig';
 export function CameraMirror({ onClose }) {
   const [frame, setFrame] = useState(null);
   const [connected, setConnected] = useState(false);
-  const [facing, setFacing] = useState('back'); // 'back' or 'front'
+  const [facing, setFacing] = useState('back');
+  const [statusMsg, setStatusMsg] = useState('ACQUIRING FEED...');
   const wsRef = useRef(null);
 
   useEffect(() => {
@@ -16,9 +17,10 @@ export function CameraMirror({ onClose }) {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        if (isMounted) setConnected(true);
-        // Request the current facing direction on start
-        ws.send(JSON.stringify({ facing }));
+        if (isMounted) {
+          setConnected(true);
+          setStatusMsg('STARTING CAMERA...');
+        }
       };
 
       ws.onmessage = (e) => {
@@ -26,15 +28,21 @@ export function CameraMirror({ onClose }) {
         const data = JSON.parse(e.data);
         if (data.frame) {
           setFrame("data:image/jpeg;base64," + data.frame);
+          setStatusMsg('');
+        } else if (data.status) {
+          setStatusMsg(data.message?.toUpperCase() || data.status.toUpperCase());
         } else if (data.error) {
+          setStatusMsg('ERROR: ' + data.error);
           console.warn("Camera stream error:", data.error);
         }
+        // ignore keepalive pings
       };
 
       ws.onclose = () => {
         if (isMounted) {
           setConnected(false);
-          // Try to reconnect
+          setFrame(null);
+          setStatusMsg('CONNECTION LOST. RECONNECTING...');
           setTimeout(() => {
             if (isMounted) connectWs();
           }, 2000);
@@ -88,12 +96,12 @@ export function CameraMirror({ onClose }) {
           <div className="absolute bottom-2 left-2 border-b-2 border-l-2 border-holo-cyan/40 w-4 h-4 pointer-events-none"></div>
           <div className="absolute bottom-2 right-2 border-b-2 border-r-2 border-holo-cyan/40 w-4 h-4 pointer-events-none"></div>
 
-          {/* Connection Overlay */}
-          {!connected && (
+          {/* Status Overlay — shown when no frame yet */}
+          {(!connected || !frame) && statusMsg && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 z-10">
-              <div className="spinner mb-4 border-t-holo-cyan"></div>
-              <p className="text-holo-cyan/70 font-[family-name:var(--font-mono)] text-xs tracking-widest animate-pulse">
-                ACQUIRING FEED...
+              <div className="w-8 h-8 border-2 border-holo-cyan border-t-transparent rounded-full animate-spin mb-4" />
+              <p className="text-holo-cyan/80 font-[family-name:var(--font-mono)] text-xs tracking-widest text-center px-4 animate-pulse">
+                {statusMsg}
               </p>
             </div>
           )}
@@ -110,8 +118,8 @@ export function CameraMirror({ onClose }) {
               <div className="absolute inset-0 pointer-events-none bg-radial-glow opacity-30"></div>
             </div>
           ) : (
-            <div className="text-text-dim opacity-40 font-[family-name:var(--font-mono)] text-xs tracking-widest animate-pulse">
-              NO SIGNAL
+            <div className="text-text-dim opacity-40 font-[family-name:var(--font-mono)] text-xs tracking-widest">
+              {statusMsg || 'NO SIGNAL'}
             </div>
           )}
 
