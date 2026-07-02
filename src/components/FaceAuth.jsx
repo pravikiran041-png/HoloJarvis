@@ -414,26 +414,19 @@ export function FaceAuth({
     }
   }, [onSuccess, onFail]);
 
-  // Auto-start dual auth flow when verify mode and both are enrolled
+  // Auto-start fingerprint verification in verify mode
   useEffect(() => {
     if (mode !== 'verify') return;
-    const hasFace = !!localStorage.getItem('jarvis_owner_face');
     const hasFinger = !!getStoredCredential();
     
     isWebAuthnAvailable().then(fpAvail => {
       const fingerReady = hasFinger && fpAvail;
-      if (hasFace && fingerReady) {
-        // Both enrolled → require both sequentially
-        setRequiresBoth(true);
-        setDualAuthStep('face');
-        setAuthMethod('face');
-      } else if (hasFace) {
-        setAuthMethod('face');
-      } else if (fingerReady) {
+      if (fingerReady) {
+        setRequiresBoth(false);
         setAuthMethod('fingerprint');
         handleFingerprintVerify();
       } else {
-        // Nothing enrolled
+        alert("Touch ID/Fingerprint is not enrolled, Sir. Please enroll it in Settings first.");
         setTimeout(() => { if (onFail) onFail(); }, 100);
       }
     });
