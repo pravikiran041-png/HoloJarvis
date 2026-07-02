@@ -468,6 +468,9 @@ async def _handle_command_logic(req: CommandRequest, authorization: Optional[str
     if ("phone" in t_lower) and any(w in t_lower for w in ("open", "show")) and not any(w in t_lower for w in ("app", "whatsapp", "instagram", "youtube", "spotify", "camera", "settings", "chrome")):
         return {"reply": "Initiating face authentication for phone access, Sir.", "action": "show_phone"}
 
+    if any(w in t_lower for w in ("surveillance", "camera stream", "show camera", "spy camera", "open camera", "phone camera")):
+        return {"reply": "Initiating face authentication for camera stream access, Sir.", "action": "show_camera"}
+
     if "show" in t_lower and "laptop screen" in t_lower:
         return {"reply": "Laptop screen stream is available in Remote Control, Sir.", "action": "laptop_stream"}
 
@@ -1199,6 +1202,12 @@ async def laptop_screenshot_send(
 @app.websocket("/ws/phone-stream")
 async def websocket_phone_stream(websocket: WebSocket):
     await stream_phone_screen(websocket)
+
+
+@app.websocket("/ws/camera-stream")
+async def websocket_camera_stream(websocket: WebSocket):
+    from backend.camera_stream import stream_phone_camera
+    await stream_phone_camera(websocket)
 
 
 @app.websocket("/ws/laptop-stream")

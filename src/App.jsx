@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { FaceAuth, enrollFingerprint, isWebAuthnAvailable, getStoredCredential } from './components/FaceAuth';
 import { PhoneMirror } from './components/PhoneMirror';
+import { CameraMirror } from './components/CameraMirror';
 import { TicTacToe } from './components/TicTacToe';
 import { RemoteControl } from './components/RemoteControl';
 import { COMMAND_URL, apiUrl, wsUrl } from './apiConfig';
@@ -531,7 +532,9 @@ export default function App() {
   
   // Phone/Face Auth state
   const [showPhoneMirror, setShowPhoneMirror] = useState(false);
+  const [showCameraMirror, setShowCameraMirror] = useState(false);
   const [faceAuthMode, setFaceAuthMode] = useState(null); // 'enroll', 'verify', or null
+  const [faceAuthAction, setFaceAuthAction] = useState('phone'); // 'phone' or 'camera'
   const [showWirelessSetupButton, setShowWirelessSetupButton] = useState(false);
 
   const [selectedLanguage, setSelectedLanguage] = useState('en-US');
@@ -699,9 +702,15 @@ export default function App() {
     
     // Intercept phone commands from backend
     if (data.action === 'show_phone') {
+      setFaceAuthAction('phone');
+      setFaceAuthMode('verify');
+    } else if (data.action === 'show_camera') {
+      setFaceAuthAction('camera');
       setFaceAuthMode('verify');
     } else if (data.action === 'hide_phone') {
       setShowPhoneMirror(false);
+    } else if (data.action === 'hide_camera') {
+      setShowCameraMirror(false);
     } else if (data.action === 'tic_tac_toe') {
       window.dispatchEvent(new CustomEvent('jarvis_ttt_move', { detail: data.position }));
     }
@@ -856,6 +865,17 @@ export default function App() {
             title="Toggle Hologram Mode"
           >
             {holoMode ? '◈ HOLO ON' : '◇ HOLO'}
+          </button>
+          <button
+            id="surveillance-button"
+            onClick={() => {
+              setFaceAuthAction('camera');
+              setFaceAuthMode('verify');
+            }}
+            className="text-[10px] font-[family-name:var(--font-display)] tracking-wider px-3 py-1.5 rounded-md border border-glass-border text-text-dim hover:border-neon-red/40 hover:text-neon-red transition-all duration-300 cursor-pointer bg-transparent"
+            title="Toggle Surveillance Mode (Camera Stream)"
+          >
+            👁️ SURVEILLANCE
           </button>
           <select
             value={selectedLanguage}
@@ -1063,22 +1083,26 @@ export default function App() {
           onSuccess={async () => {
             if (faceAuthMode === 'verify') {
               setFaceAuthMode(null);
-              // Wireless connect → wake → unlock → then open mirror
-              addMessage('assistant', 'Connecting to your phone, Sir...');
-              try {
-                const res = await fetch(apiUrl('/phone/show'), { method: 'POST' });
-                const data = await res.json();
-                if (data.success) {
-                  addMessage('assistant', data.message || 'Phone ready, Sir.');
-                  setShowWirelessSetupButton(false);
-                  setShowPhoneMirror(true);
-                } else {
-                  addMessage('assistant', data.message || 'Phone not reachable, Sir. Make sure Tailscale is running.');
+              if (faceAuthAction === 'phone') {
+                // Wireless connect → wake → unlock → then open mirror
+                addMessage('assistant', 'Connecting to your phone, Sir...');
+                try {
+                  const res = await fetch(apiUrl('/phone/show'), { method: 'POST' });
+                  const data = await res.json();
+                  if (data.success) {
+                    addMessage('assistant', data.message || 'Phone ready, Sir.');
+                    setShowWirelessSetupButton(false);
+                    setShowPhoneMirror(true);
+                  } else {
+                    addMessage('assistant', data.message || 'Phone not reachable, Sir. Make sure Tailscale is running.');
+                    setShowWirelessSetupButton(true);
+                  }
+                } catch (err) {
+                  addMessage('assistant', 'Failed to connect to phone, Sir. Check your network.');
                   setShowWirelessSetupButton(true);
                 }
-              } catch (err) {
-                addMessage('assistant', 'Failed to connect to phone, Sir. Check your network.');
-                setShowWirelessSetupButton(true);
+              } else if (faceAuthAction === 'camera') {
+                setShowCameraMirror(true);
               }
             } else {
               setFaceAuthMode(null);
@@ -1090,6 +1114,10 @@ export default function App() {
       
       {showPhoneMirror && (
         <PhoneMirror onClose={() => setShowPhoneMirror(false)} />
+      )}
+
+      {showCameraMirror && (
+        <CameraMirror onClose={() => setShowCameraMirror(false)} />
       )}
 
       {showWirelessSetupButton && (
