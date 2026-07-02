@@ -101,10 +101,10 @@ class CameraStreamManager:
                 # Wait for scrcpy to create and start writing the file (up to 10 seconds for wireless ADB)
                 for _ in range(100):  
                     await asyncio.sleep(0.1)
-                    if os.path.exists(RECORD_FILE) and os.path.getsize(RECORD_FILE) > 0:
+                    if os.path.exists(RECORD_FILE):
                         break
 
-                if not os.path.exists(RECORD_FILE) or os.path.getsize(RECORD_FILE) == 0:
+                if not os.path.exists(RECORD_FILE):
                     print("[camera] scrcpy did not start writing in time")
                     await self.stop_stream_internal()
                     return False
@@ -213,79 +213,7 @@ class CameraStreamManager:
 camera_manager = CameraStreamManager()
 
 
-async def _screencap_camera_fallback(websocket: WebSocket, facing="back"):
-    """
-    Fallback for devices where scrcpy --video-source=camera is blocked (e.g. Samsung A23 Knox).
-    Opens the native Samsung camera app and streams screenshots.
-    """
-    import subprocess
-
-    target = get_adb_target()
-    if not target:
-        await websocket.send_json({"error": "Phone not configured."})
-        return
-
-    await websocket.send_json({"status": "connecting", "message": "Opening camera app (fallback mode)..."})
-
-    # Wake screen
-    try:
-        subprocess.run(["adb", "-s", target, "shell", "input", "keyevent", "WAKEUP"], timeout=3)
-        await asyncio.sleep(0.5)
-    except Exception:
-        pass
-
-    # Open Samsung camera app
-    try:
-        if facing == "front":
-            # Open camera then switch to front
-            subprocess.run(["adb", "-s", target, "shell", "am", "start",
-                            "-n", "com.sec.android.app.camera/com.sec.android.app.camera.Camera",
-                            "--ei", "samsung.intent.extra.CAMERA_FACING", "1"],
-                           capture_output=True, timeout=5)
-        else:
-            subprocess.run(["adb", "-s", target, "shell", "am", "start",
-                            "-n", "com.sec.android.app.camera/com.sec.android.app.camera.Camera",
-                            "--ei", "samsung.intent.extra.CAMERA_FACING", "0"],
-                           capture_output=True, timeout=5)
-        await asyncio.sleep(2)  # Give camera app time to initialize
-    except Exception as e:
-        await websocket.send_json({"error": f"Could not open camera: {e}"})
-        return
-
-    await websocket.send_json({"status": "streaming", "message": "Camera streaming (screencap mode)"})
-
-    try:
-        while True:
-            try:
-                cmd = ["adb", "-s", target, "exec-out", "screencap", "-p"]
-                proc = await asyncio.create_subprocess_exec(
-                    *cmd,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.DEVNULL
-                )
-                try:
-                    stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=15.0)
-                    if proc.returncode == 0 and stdout and len(stdout) > 100:
-                        data = base64.b64encode(stdout).decode()
-                        await websocket.send_json({"frame": data})
-                except asyncio.TimeoutError:
-                    try:
-                        proc.kill()
-                    except Exception:
-                        pass
-            except Exception:
-                pass
-
-            await asyncio.sleep(1.5)  # ~0.7 FPS to save bandwidth
-    except Exception:
-        pass
-    finally:
-        # Close camera app when done
-        try:
-            subprocess.run(["adb", "-s", target, "shell", "input", "keyevent", "HOME"],
-                           capture_output=True, timeout=3)
-        except Exception:
-            pass
+camera_manager = CameraStreamManager()
 
 
 async def stream_phone_camera(websocket: WebSocket):
@@ -297,10 +225,11 @@ async def stream_phone_camera(websocket: WebSocket):
         await websocket.send_json({"status": "connecting", "message": "Starting camera..."})
         success = await camera_manager.start_stream(facing="back")
         if not success:
-            # scrcpy camera failed — use screencap fallback (Samsung A23 Knox)
-            print("[camera] scrcpy camera blocked, falling back to screencap mode")
+            await websocket.send_json({
+                "error": "Camera stream failed. Check if phone is connected to Tailscale."
+            })
             camera_manager.active_websockets.discard(websocket)
-            await _screencap_camera_fallback(websocket, facing="front")
+            await websocket.close()
             return
 
     try:
@@ -311,9 +240,8 @@ async def stream_phone_camera(websocket: WebSocket):
                     await websocket.send_json({"status": "switching", "message": f"Switching to {data['facing']} camera..."})
                     success = await camera_manager.start_stream(facing=data["facing"])
                     if not success:
-                        # Fallback for face switch too
                         camera_manager.active_websockets.discard(websocket)
-                        await _screencap_camera_fallback(websocket, facing=data["facing"])
+                        await websocket.close()
                         return
             except asyncio.TimeoutError:
                 # Send a keepalive ping
