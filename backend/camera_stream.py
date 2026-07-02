@@ -64,15 +64,18 @@ class CameraStreamManager:
                 "--video-source=camera",
                 f"--camera-facing={facing}",
                 "--no-audio",
-                "--no-playback",
-                "--no-window",
                 f"--record={RECORD_FILE}",
                 "--record-format=mkv",
                 "--max-size=640",
-                "--max-fps=12"
+                "--max-fps=12",
+                "--window-borderless",
+                "--window-title=JARVIS_CAM",
+                "--window-width=1",
+                "--window-height=1",
             ]
 
             try:
+                # Start scrcpy (writes mkv to file)
                 self.scrcpy_proc = await asyncio.create_subprocess_exec(
                     *scrcpy_cmd,
                     stdout=asyncio.subprocess.DEVNULL,
@@ -80,8 +83,8 @@ class CameraStreamManager:
                     preexec_fn=os.setsid
                 )
 
-                # Wait for scrcpy to create and start writing the file
-                for _ in range(30):  # Up to 3 seconds
+                # Wait for scrcpy to create and start writing the file (up to 10 seconds for wireless ADB)
+                for _ in range(100):  
                     await asyncio.sleep(0.1)
                     if os.path.exists(RECORD_FILE) and os.path.getsize(RECORD_FILE) > 0:
                         break
