@@ -58,7 +58,9 @@ def start_phone_audio(source="media") -> dict:
         ]
 
         if source == "call":
-            cmd.append("--audio-source=voice-call")
+            # Using 'mic' as a workaround because Android 10+ blocks VoIP/WhatsApp audio capture. 
+            # If the user puts the phone on speakerphone, the mic will pick up the other person's voice.
+            cmd.append("--audio-source=mic")
         else:
             # Media / Playback
             cmd.append("--audio-dup")        # Play audio on phone AND laptop simultaneously
